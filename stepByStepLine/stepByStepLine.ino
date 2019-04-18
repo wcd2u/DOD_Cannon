@@ -1,9 +1,6 @@
 #include <QTRSensors.h>
 
 
-
-
-
 #define NUM_SENSORS_MAIN 5
 //#define NUM_SENSORS_AUX 2
 #define TIMEOUT 2500
@@ -122,8 +119,10 @@ void setup() {
 }
 
 void loop() {
+  Serial.println("Start of loop");
   // put your main code here, to run repeatedly:
-  mainValues[NUM_SENSORS_MAIN] = {values()};
+  values(mainValues);
+  Serial.println("Values read");
   for (unsigned int i = 0; i < NUM_SENSORS_MAIN; i++) {
     Serial.print(mainValues[i]);
     Serial.print('\t');
@@ -132,7 +131,7 @@ void loop() {
   while ((mainValues[0] == 0) and (mainValues[1] == 0) and (mainValues[2] == 0) and (mainValues[3] == 0) and (mainValues[4] == 0)) {
     Serial.println("There is no line");
     halt();
-    mainValues[NUM_SENSORS_MAIN] = {values()};
+    values(mainValues);
     for (unsigned int i = 0; i < NUM_SENSORS_MAIN; i++) {
       Serial.print(mainValues[i]);
       Serial.print('\t');
@@ -147,10 +146,12 @@ void loop() {
       move_forward(motor_speed);
     }
     if (mainValues[1] == 1) {
+      move_forward(motor_speed);
       rotate_CCW(motor_speed);
       Serial.println("Right-to-left correction");
     }
     if (mainValues[3] == 1) {
+      move_forward(motor_speed);
       rotate_CW(motor_speed);
       Serial.println("Left-to-right correction");
     }
@@ -160,7 +161,7 @@ void loop() {
       while ((mainValues[0] == 1) or (mainValues[1] == 1)) {
         Serial.println("Too far right");
         translate_left(motor_speed);
-        mainValues[NUM_SENSORS_MAIN] = {values()};
+        values(mainValues);
         for (unsigned int i = 0; i < NUM_SENSORS_MAIN; i++) {
           Serial.print(mainValues[i]);
           Serial.print('\t');
@@ -172,7 +173,7 @@ void loop() {
       while ((mainValues[4] == 1) or (mainValues[3] == 1)) {
         Serial.println("Too far left");
         translate_right(motor_speed);
-        mainValues[NUM_SENSORS_MAIN] = {values()};
+        values(mainValues);
         for (unsigned int i = 0; i < NUM_SENSORS_MAIN; i++) {
           Serial.print(mainValues[i]);
           Serial.print('\t');
@@ -878,17 +879,17 @@ void back_pivot_CW(int motor_speed)
  
 }
 
-unsigned int values()
+void values(unsigned int targetValues[NUM_SENSORS_MAIN])
 {
-  sensorsMain.read(mainValues);
+  sensorsMain.read(targetValues);
   for (unsigned int i = 0; i < NUM_SENSORS_MAIN; i++) {
-    if (mainValues[i] < threshold[i]) {
-      mainValues[i] = 0;
+    if (targetValues[i] < threshold[i]) {
+      targetValues[i] = 0;
     }
     else {
-      mainValues[i] = 1;
+      targetValues[i] = 1;
     }
   }
-  return mainValues;
+  return;
   
 }
