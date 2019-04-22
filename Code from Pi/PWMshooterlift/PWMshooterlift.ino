@@ -37,10 +37,15 @@ int M2IN2 = 11;
 int EN7 = 7;
 int EXTEND = 13;
 int RETRACT = 12;
+///////////////////////////////////////////////////////////////////
+//  Below are the integers for limit switches 1 & 2, resectively
+
+//////////////////////////////////////////////////////////////////////
+//  Below are the integers for the LED colors
+
 //////////////////////////////////////////////////////////////////////////////////////////////////
 int incomingByte = 0;
-int shootByte = 0;
-bool launch = true;
+int mode = 0;
 
 void setup() {
   // put your setup code here, to run once:
@@ -84,7 +89,7 @@ void setup() {
   ////////////////////////////////////////////////////////////////////////////////////
   // Below is the set up for serial communication
   Serial.begin(57600);
-  Serial.setTimeout(1000);
+  Serial.setTimeout(500);
 
 }
 
@@ -92,11 +97,18 @@ void loop() {
   // put your main code here, to run repeatedly:
   if(Serial.available() > 0) {
     incomingByte = Serial.read();
+
+    if (incomingByte == 'A') {
+      //bluelight
+    }
+    if (incomingByte == 'M') {
+      //greenlight
+    }
     
-    if (incomingByte == 'g') {
+    if ((incomingByte == 'g') and (upperLimit == 0)) {
       go_up();
     }
-    if (incomingByte == 'h') {
+    if ((incomingByte == 'h') and (lowerLimit == 0)) {
       go_down();
     }
     if (incomingByte == 'x') {
