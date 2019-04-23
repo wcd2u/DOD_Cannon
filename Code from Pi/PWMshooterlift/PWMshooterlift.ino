@@ -39,13 +39,20 @@ int EXTEND = 13;
 int RETRACT = 12;
 ///////////////////////////////////////////////////////////////////
 //  Below are the integers for limit switches 1 & 2, resectively
-
+int upperLimit = 46;
+int lowerLimit = 48;
+int upper = 0;
+int lower = 0;
+int upTrigger = 0;
+int downTrigger = 0;
 //////////////////////////////////////////////////////////////////////
 //  Below are the integers for the LED colors
-
+int ledRed = 31;
+int ledGreen = 33;
+int ledBlue = 35;
 //////////////////////////////////////////////////////////////////////////////////////////////////
 int incomingByte = 0;
-int mode = 0;
+int mode = 1;
 
 void setup() {
   // put your setup code here, to run once:
@@ -87,9 +94,19 @@ void setup() {
   pinMode(EXTEND,OUTPUT);  //  Digital input to extend piston
   pinMode(RETRACT,OUTPUT);  //  Digital input to retract piston
   ////////////////////////////////////////////////////////////////////////////////////
+  pinMode(upperLimit,INPUT);
+  pinMode(lowerLimit,INPUT);
+  ////////////////////////////////////////////////////////////////////
+  // Below is the set up for the LED indicator
+  pinMode(ledRed,OUTPUT);
+  pinMode(ledGreen,OUTPUT);
+  pinMode(ledBlue,OUTPUT);
+  ////////////////////////////////////////////////////////////////////
   // Below is the set up for serial communication
   Serial.begin(57600);
   Serial.setTimeout(500);
+
+  
 
 }
 
@@ -97,19 +114,53 @@ void loop() {
   // put your main code here, to run repeatedly:
   if(Serial.available() > 0) {
     incomingByte = Serial.read();
+  }
+    upper = digitalRead(upperLimit);
+    lower = digitalRead(lowerLimit);
 
     if (incomingByte == 'A') {
-      //bluelight
+      blueLight();
+      mode = 2;
+//      piston_retract();
+//      delay(2000);
+//      while (digitalRead(lowerLimit)==0) {
+//        go_down();
+//      }
+//      delay(200);
+//      halt_lift();
     }
     if (incomingByte == 'M') {
-      //greenlight
+      greenLight();
+      mode = 1;
+      upperTrigger = 0;
+      lowerTrigger = 0; 
     }
     
-    if ((incomingByte == 'g') and (upperLimit == 0)) {
+    if ((incomingByte == 'g') and (upper == 0)) {
       go_up();
     }
-    if ((incomingByte == 'h') and (lowerLimit == 0)) {
+    if ((incomingByte == 'g') and (upper == 1)){
+      halt_lift();
+    }
+    if ((incomingByte == 'g') and (upper == 1) and (upTrigger == 0) and (mode == 2)) {
+      halt_lift();
+      upTrigger = 1;
+      Serial.print('b');
+      downTrigger = 0;
+    }
+    if ((incomingByte == 'h') and (lower == 0)) {
       go_down();
+    }
+    if ((incomingByte == 'h') and (lower == 1)) {
+      //delay(100);
+      halt_lift();
+    }
+    if ((incomingByte == 'h') and (lower == 1) and (downTrigger == 0) and (mode == 2)) {
+      //delay(100);
+      halt_lift();
+      downTrigger = 1;
+      Serial.print('C');
+      upTrigger = 0;
     }
     if (incomingByte == 'x') {
       halt_lift();
@@ -130,7 +181,7 @@ void loop() {
       halt_shoot();
     }
       
-  }   
+     
 }
 /////////////////////////////////////////////////////////////////////////////////////////////
 // Below is the code for the lift
@@ -249,4 +300,21 @@ void halt_piston()
   digitalWrite(RETRACT,LOW);  //  Set RETRACT low
   
   
+}
+void redLight() {
+  digitalWrite(ledRed,HIGH);
+  digitalWrite(ledGreen,LOW);
+  digitalWrite(ledBlue,LOW);
+}
+
+void greenLight() {
+  digitalWrite(ledRed,LOW);
+  digitalWrite(ledGreen,HIGH);
+  digitalWrite(ledBlue,LOW);
+}
+
+void blueLight() {
+  digitalWrite(ledRed,LOW);
+  digitalWrite(ledGreen,LOW);
+  digitalWrite(ledBlue,HIGH);
 }

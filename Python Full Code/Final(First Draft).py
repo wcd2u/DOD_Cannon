@@ -90,6 +90,7 @@ while done == False:
     if mode == 'manual':
 
         ser1.write(b'M')
+        ser2.write(b'M')
 
         while ((mode == 'manual') and (done == False)):
 
@@ -311,13 +312,15 @@ while done == False:
                 done = True
                 wheels = ['1000','1000','1000','1000']
 
-            print(wheels)
-            ser1.write('.'.encode("ascii"))
+            #print(wheels)
+            #ser1.write('.'.encode("ascii"))
 
             if wheels == ['1000','1000','1000','1000']:
                 halt()
 
             else:
+                print(wheels)
+                ser1.write('.'.encode("ascii"))
 
                 for i in range(4):
         
@@ -327,6 +330,7 @@ while done == False:
     if mode == 'auto':
 
         ser1.write(b'A')
+        ser2.write(b'A')
 
         while done == False and mode == 'auto':
 
@@ -336,39 +340,42 @@ while done == False:
 
                 if data == b'a':
 
-                    liftRaise()
+                    while data == b'a':
+                        liftRaise()
+                        if ser2.in_waiting > 0:
+                            data = ser2.read()
 
-                    while ser2.in_waiting == 0:
+                    #while ser2.in_waiting == 0:
 
-                        if joystick.get_button(8):
+                        #if joystick.get_button(8):
 
-                            done = True
+                            #done = True
 
-                        if joystick.get_button(9):
+                        #if joystick.get_button(9):
 
-                            mode = 'manual'
+                            #mode = 'manual'
 
-                    data = ser2.read()
-
-                    haltLift()
+                    #haltLift()
 
                     time.sleep(2)
 
                     while data == b'b':
 
                         liftLower()
+                        if ser2.in_waiting > 0:
+                            data = ser2.read()
 
-                        while ser2.in_waiting == 0:
+                        #while ser2.in_waiting == 0:
 
-                            if joystick.get_button(8):
+                            #if joystick.get_button(8):
 
-                                done = True
+                                #done = True
 
-                            if joystick.get_button(9):
+                            #if joystick.get_button(9):
 
-                                mode = 'manual'
+                                #mode = 'manual'
 
-                        data = ser2.read()
+                        #data = ser2.read()
 
                     if data == b'C':
 
@@ -376,7 +383,7 @@ while done == False:
 
                     time.sleep(1)
 
-            if ser1.in_waiting > 0:
+                
 
                 data = ser1.read()
 

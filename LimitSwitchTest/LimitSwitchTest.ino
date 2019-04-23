@@ -20,19 +20,22 @@ void loop() {
     Serial.print("Upper");
     Serial.print('\t');
     Serial.println("Lower");
-    if (upper == 1) {
-      Serial.print("1");
-    }
-    else {
-      Serial.print("0");
-    }
+    Serial.print(upper);
     Serial.print('\t');
-    if (lower == 1) {
-      Serial.print("1");
-    }
-    else {
-      Serial.print("0");
-    }
+    Serial.println(lower);
+//    if (upper == 1) {
+//      Serial.print("1");
+//    }
+//    else {
+//      Serial.print("0");
+//    }
+//    Serial.print('\t');
+//    if (lower == 1) {
+//      Serial.print("1");
+//    }
+//    else {
+//      Serial.print("0");
+//    }
     Serial.println();
   //}
 }

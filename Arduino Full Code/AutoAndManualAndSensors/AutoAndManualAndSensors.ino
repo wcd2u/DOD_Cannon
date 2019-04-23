@@ -57,6 +57,7 @@ int M2IN1B = 5;
 int M2IN2B = 2;
 
 int mode = 'm';
+int movement = 0;
 int data = 0;
 int ballInRange = 0;
 char wheel1[5];
@@ -73,6 +74,10 @@ int w3b = 0;
 int w4f = 0;
 int w4b = 0;
 int motor_speed = 40;
+////////////////////////////////////////////////////////////////////
+//  Below are the integers for the ball recognition and lift sensors
+int rangeSensor = A13;
+int liftSensor = A14;
 
 QTRSensorsAnalog sensorsMain((unsigned char[]) {A8, A9, A10, A11, A12}, NUM_SENSORS_MAIN, NUM_SAMPLES_PER_SENSOR, QTR_NO_EMITTER_PIN);
 unsigned int mainValues[NUM_SENSORS_MAIN];
@@ -121,7 +126,12 @@ void setup() {
  pinMode(M2D1B,OUTPUT); // Digital input for M2D1
  pinMode(M2D2B,OUTPUT); // Digital input for M2D2
  //pinMode(M2SFB,INPUT); // Analog input for M2SF
- 
+ //////////////////////////////////////////////////////////////////
+ // Below is the set up for the ball recogition and lift sensors
+ pinMode(rangeSensor,INPUT);
+ pinMode(liftSensor,INPUT);
+ //////////////////////////////////////////////////////////////////
+ // Below is the serial port initialization
  Serial.begin(57600);
  Serial.setTimeout(500);
  
@@ -131,14 +141,23 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-
+  // The robot begins operation in 'manual' mode.  This if-statement
+  // encompasses all manual action.
+  
+  // Checks mode flag to ensure 'manual' mode begins.  The robot can be
+  // toggled from 'manual' to 'automatic' and back again at will.
   if (mode == 'm') {
     
+    // Checks that serial data is available.  Helps prevent buffer
+    // over/underflow
     if(Serial.available() > 0) {
   
       data = Serial.read();
       //Serial.println(data);
+
+      // All mecanum wheel motion is prefaced with a '.'. This allows
+      // the following 16 bytes to be parsed together in order to
+      // be passed into the manual_move function properly.
       if (data == '.') {
         //Serial.println("Read period.");
   
@@ -223,11 +242,20 @@ void loop() {
       }
       if (data == 'A') {
         mode = data;
+        halt();
+      }
+      if (data == 'z') {
+        halt();
       }
       
     }
-    halt();
+    //halt();
   }
+
+  // Checks if the robot has been put into 'automatic' mode.  For best results, use
+  // 'manual' mode to drive the robot up to the line you wish to follow, with the
+  // line-sensor array perpendicular to the line and the middle sensor over the middle
+  // of the line.
   if (mode == 'A') {
 
     values(mainValues);
@@ -235,7 +263,7 @@ void loop() {
       halt();
       values(mainValues);
     }
-    if (mainValues[2] == 1) {
+    if ((mainValues[2] == 1) and (movement == 0)) {
       if ((mainValues[1] == 0) and (mainValues[3] == 0)) {
         move_forward(motor_speed);
       }
@@ -248,52 +276,55 @@ void loop() {
         rotate_CW(motor_speed);
       }
     }
-    //insert ball sensor to reduce speed
-    if (BALLSENSOR1 and (ballInRange == 0)){
-      motor_speed = motor_speed-15;
+    // Checks range sensor to see if ball is nearby.  When triggered,
+    // will lower the motor speed of the wheels to make collection
+    // easier.  ballInRange is a variable to ensure motor_speed can
+    // only be lowered one time until it gets raised to its normal
+    // value again.
+    if ((digitalRead(rangeSensor) == 0) and (ballInRange == 0)) {
+      motor_speed = motor_speed-10;
       ballInRange = 1;
     }
-    if BALLSENSOR2 {
+    // Checks lift sensor to see if ball is ready to lift into storage.
+    // Halts motion until it receives signal that collection has finished.
+    // Once finished, sets motor speed back to normal and resets the flag
+    // to allow for another speed decrement when another ball is encountered.
+    if (digitalRead(liftSensor) == 0) {
       halt();
-      Serial.print('a')
+      Serial.print('a');
       while (data != 'C') {
-        data = Serial.read();
+        if (Serial.available()>0){
+          data = Serial.read();
+        }
       }
-      motor_speed = motor_speed + 15;
+      motor_speed = motor_speed + 10;
       ballInRange = 0;
     }
     if ((mainValues[0] == 1) and (mainValues[4] == 1)) {
-      rotate_CW(motor_speed);
-      delay(1000);
+      rotate_CW(motor_speed*2);
+      delay(2550);
       while(mainValues[1] == 0) {
         rotate_CW(motor_speed);
         values(mainValues);
       }
+      rotate_CCW(motor_speed);
+      delay(100);
       halt();
-      while ((mainValues[0] == 0) and (mainValues[4] == 0)) {
-        move_backward(motor_speed);
-        values(mainValues);
-      }
-      if (mainValues[0] == 1) {
-
-        while (mainValues[4] == 0) {
-          rotate_CW(motor_speed);
-          values(mainValues);
-        }
-      }
-      if (mainValues[4] == 1) {
-
-        while (mainValues[0] == 0) {
-          rotate_CCW(motor_speed);
-          values(mainValues);
-        }
-      }
+//      while ((mainValues[2] == 1) and (mainValues[3] == 1)) {
+//        rotate_CW(motor_speed);
+//      }
+      
       halt();
       Serial.print('E');
+      movement = 1;
     }
-    while (data != 'M') {
+    if (Serial.available()>0) {
       data = Serial.read();
     }
+    if (data == 'M') {
+      mode = 'm';
+    }
+    
   }
 }
 void manual_move(int m1f, int m1b, int m2f, int m2b, int m3f, int m3b, int m4f, int m4b)

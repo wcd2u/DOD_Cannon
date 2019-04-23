@@ -1,3 +1,5 @@
+//  HIGH logic means low reflectance (no object)
+
 int rangeSensor = A13;
 int liftSensor = A14;
 
